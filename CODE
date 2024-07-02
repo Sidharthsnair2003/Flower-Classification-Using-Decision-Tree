@@ -1,0 +1,56 @@
+% Load the Fisher Iris dataset
+load fisheriris;
+
+% Prepare the data using only the first two features for simplicity
+X = meas(:, 1:2);
+Y = species;
+
+% Split the data into training and test sets
+cv = cvpartition(Y, 'HoldOut', 0.3); % 30% for testing
+XTrain = X(training(cv), :);
+YTrain = Y(training(cv), :);
+XTest = X(test(cv), :);
+YTest = Y(test(cv), :);
+
+% Train a classification model (e.g., Decision Tree)
+model = fitctree(XTrain, YTrain);
+
+% Test the model
+YPred = predict(model, XTest);
+
+% Evaluate the accuracy
+accuracy = sum(strcmp(YPred, YTest)) / length(YTest);
+fprintf('Accuracy: %.2f%%\n', accuracy * 100);
+
+% Plotting the decision boundary
+figure;
+gscatter(X(:,1), X(:,2), Y);
+hold on;
+
+% Generate a grid for decision boundary plotting
+d = 0.01;
+[x1Grid, x2Grid] = meshgrid(min(X(:,1)):d:max(X(:,1)), min(X(:,2)):d:max(X(:,2)));
+xGrid = [x1Grid(:), x2Grid(:)];
+[~, scores] = predict(model, xGrid);
+
+% Plot decision boundaries
+[~, maxScore] = max(scores, [], 2);
+maxScore = reshape(maxScore, size(x1Grid));
+contour(x1Grid, x2Grid, maxScore, 'k');
+
+xlabel('Sepal Length');
+ylabel('Sepal Width');
+title('Decision Boundary and Training Data');
+legend('Setosa', 'Versicolor', 'Virginica', 'Location', 'Best');
+hold off;
+
+% Confusion Matrix
+figure;
+confMat = confusionmat(YTest, YPred);
+confusionchart(confMat);
+title('Confusion Matrix');
+
+% Plot the decision tree
+figure;
+view(model, 'Mode', 'graph');
+title('Trained Decision Tree');
